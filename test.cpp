@@ -1,3 +1,10 @@
+/* 
+To run: First bootstrap another node, e.g. using dhtnode.
+The below code uses localhost:4222, so the corresponding
+dhtnode command is:
+dhtnode -b localhost -p 4222
+*/
+
 #include <opendht.h>
 #include <vector>
 #include<unistd.h>
