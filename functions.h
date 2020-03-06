@@ -37,3 +37,10 @@ std::string asciify(std::vector<auto> const &vec) {
     return fullString;
 }
 
+/* Checks if path_name is root */
+bool is_root(std::string path_name) {
+        if (path_name == "/") {
+                return true;
+        }
+        return false;
+}
