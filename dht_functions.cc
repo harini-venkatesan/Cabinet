@@ -88,49 +88,59 @@ void dht_mkdir(std::string path_name) {
 	std::cout << "\nLeaving dht_mkdir...\n\n";
 }
 
-void dht_get() {
-	/* string for converting name to uuid */
-	std::string name2file;
-	/* string for storing all file strings in uuid */
-	std::vector<std::string> fileStringsVec;
-	/* vector that contains the conversion of file strings to data type file */
-	std::vector<file> fileVec;
+std::vector<std::string> dht_readdir(std::string path_name) {
+        /* string for converting name to uuid */
+        std::string name2file;
+        /* string for storing all file strings in uuid */
+        std::vector<std::string> fileStringsVec;
+        /* vector that contains the conversion of file strings to data type file */
+        std::vector<file> fileVec;
+        std::vector<std::string> fileNamesVec;
 
-	std::cout << "Entering dht_get...\n\n";
+        std::cout << "Entering dht_readdir...\n\n";
+        std::cout << "Getting uuid of '" << path_name << "'...\n";
+        /* Get corresponding uuid for filename */
+        node.get(path_name, [&name2file](const std::vector<std::shared_ptr<dht::Value>>& values) {
+                for (const auto& value : values) {
+                        name2file = asciify((*value).data);
+                }
+                return true;
+        });
 
-	/* Get corresponding uuid for filename */
-	node.get("/", [&name2file](const std::vector<std::shared_ptr<dht::Value>>& values) {
-		for (const auto& value : values) {
-			name2file = asciify((*value).data);
-		}
-		return true;
-	});
+        sleep(1);
+        std::cout << "Getting contents of '" << name2file << "'...\n";
+        /* With uuid, get all files in directory */
+        node.get(name2file, [&fileStringsVec](const std::vector<std::shared_ptr<dht::Value>>& values) {
+                for (const auto& value : values) {
+                        std::string uuid2file = asciify((*value).data);
+                        fileStringsVec.push_back(uuid2file);
+                }
+                return true;
+        });
 
-	sleep(1);
-	
-	/* With uuid, get all files in directory */
-	node.get(name2file, [&fileStringsVec](const std::vector<std::shared_ptr<dht::Value>>& values) {
-		for (const auto& value : values) {
-			std::string uuid2file = asciify((*value).data);
-			fileStringsVec.push_back(uuid2file);
-        	}
-		return true; // return false to stop the search
-	});
+        sleep(1);
 
-	sleep(1);
-	
-	for (int i = 0; i < fileStringsVec.size(); i++) {
-		fileVec.push_back(parseIncomingDHT(fileStringsVec[i]));
-	}
-	
-	for (int i = 0; i < fileVec.size(); i++) {
-		std::cout << "fileVec[" << i << "] id: " << fileVec[i].id << std::endl;
-		std::cout << "fileVec[" << i << "] content: " << fileVec[i].content << std::endl;
-		std::cout << "fileVec[" << i << "] isExists: " << fileVec[i].isExists << std::endl;
-	}
+        for (int i = 0; i < fileStringsVec.size(); i++) {
+                fileVec.push_back(parseIncomingDHT(fileStringsVec[i]));
+        }
 
-	std::cout << "\n\nLeaving dht_get...\n\n";
-	
+        for (int i = 0; i < fileVec.size(); i++) {
+                /*
+                std::cout << "fileVec[" << i << "] id: " << fileVec[i].id << std::endl;
+                std::cout << "fileVec[" << i << "] content: " << fileVec[i].content << std::endl;
+                std::cout << "fileVec[" << i << "] isExists: " << fileVec[i].isExists << std::endl;
+                */
+                fileNamesVec.push_back(fileVec[i].content);
+                std::cout << std::endl;
+        }
+
+        std::cout << "Contents of fileNamesVec: \n";
+        for (int i = 0; i < fileNamesVec.size(); i++) {
+                std::cout << fileNamesVec[i] << "    ";
+        }
+
+        std::cout << "\nLeaving dht_readdir...\n\n";
+        return fileNamesVec;
 }
 
 
@@ -141,7 +151,7 @@ int main() {
 	/* for test purposes */
 	dht_init_root();
 	dht_mkdir("/A");
-	dht_get();	
+	dht_readdir("/");	
 
 }
 
