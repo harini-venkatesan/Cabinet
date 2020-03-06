@@ -173,15 +173,15 @@ Otherwise nothing exists at the given path, and we return -ENOENT.
 */
 
     if (path = '/') {
-    stbuf->st_mode = S_IFDIR | 0755;
-    stbuf->st_nlink = 2;
+    statit->st_mode = S_IFDIR | 0755;
+    statit->st_nlink = 2;
     return 0;
     }
 
   if (strcmp(path, filepath) == 0) {
-    stbuf->st_mode = S_IFREG | 0777;
-    stbuf->st_nlink = 1;
-    stbuf->st_size = strlen(length of file);
+    statit->st_mode = S_IFREG | 0777;
+    statit->st_nlink = 1;
+    statit->st_size = strlen(length of file);
     return 0;
     }
 
