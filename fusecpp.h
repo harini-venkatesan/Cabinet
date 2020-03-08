@@ -43,7 +43,7 @@ namespace fuse_cpp {
 	typedef int(*readdir) (const char *, void *, fuse_fill_dir_t, off_t, struct fuse_file_info *);
 	typedef int(*releasedir) (const char *, struct fuse_file_info *);
 	typedef int(*fsyncdir) (const char *, int, struct fuse_file_info *);
-	typedef void *(*init) (void);
+	typedef void *(*init) (struct fuse_conn_info *);
 	typedef void (*destroy) (void *);
 	typedef int(*access) (const char *, int);
 	typedef int(*create) (const char *, mode_t, struct fuse_file_info *);
@@ -97,7 +97,7 @@ namespace fuse_cpp {
 		void set_readdir	( readdir 		ptr ) 	{ theOps.readdir	= ptr; }
 		void set_releasedir 	( releasedir 		ptr ) 	{ theOps.releasedir	= ptr; }
 		void set_fsyncdir	( fsyncdir 		ptr ) 	{ theOps.fsyncdir	= ptr; }
-		//void set_init 		( init 			ptr ) 	{ theOps.init		= ptr; }
+		void set_init 		( init 			ptr ) 	{ theOps.init		= ptr; }
 		void set_destroy	( destroy	 	ptr ) 	{ theOps.destroy	= ptr; }
 		void set_access		( access 		ptr ) 	{ theOps.access		= ptr; }
 		void set_create		( create 		ptr ) 	{ theOps.create		= ptr; }
@@ -108,3 +108,4 @@ namespace fuse_cpp {
 };
 
 #endif
+
