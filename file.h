@@ -15,12 +15,15 @@ class file {
                 /* Constructors */
                 file();
                 file(unsigned long long id, std::string content, bool isExists, bool isDirectory);
+
+                bool operator ==(const file &rhs);
+
                 // implements msgpack-c serialization methods
                 // MSGPACK_DEFINE(id, content, isExists);
 };
 
 file::file() {
-        
+
 }
 
 file::file(unsigned long long id, std::string content, bool isExists, bool isDirectory) {
@@ -28,4 +31,11 @@ file::file(unsigned long long id, std::string content, bool isExists, bool isDir
         this->content           = content;
         this->isExists          = isExists;
         this->isDirectory       = isDirectory;
+}
+
+/* only used for checking if file has been deleted
+   so does not check this->isDeleted == rhs.isDeleted */
+
+bool file::operator ==(const file &rhs) {
+        return (this->id == rhs.id && this->content == rhs.content && this->isDirectory == rhs.isDirectory);
 }
