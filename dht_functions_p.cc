@@ -53,7 +53,10 @@ file parseIncomingDHT(std::string data) {
    If it exists, do not put. If it does not exist, put
    Note: value should already be in string form of file
    i.e. id##isExists##isDirectory##content
-   this can be done with parseOutgoingDHT) */
+   this can be done with parseOutgoingDHT) 
+   TODO: make xcp more robust
+   TODO: DOES NOT WORK WITH <PATH, UUID> CHECK
+   */
 bool dht_exclusive_put(std::string key, std::string value) {
         std::vector<std::string> existing_values;
 
@@ -66,23 +69,23 @@ bool dht_exclusive_put(std::string key, std::string value) {
                 return true;
         });
 
-        sleep(1);
+        sleep(2);
 
         /* extract only the content */
         for (int i = 0; i < existing_values.size(); i++) {
                 existing_values[i] = existing_values[i].substr(existing_values[i].find_last_of("##") + 1);
         }
 
-        /* check value against existing values via content */
+	/* check value against existing values via content */
         std::string value_content = value.substr(value.find_last_of("##") + 1);
 
-        for (int i = 0; i < existing_values.size(); i++) {
-                if (value_content == existing_values[i]) {
+	for (int i = 0; i < existing_values.size(); i++) {
+		if (value_content == existing_values[i]) {
                         /* return false - did not put value */
                         return false;
                 }
         }
-
+	
         /* At this point, value is new - put it */
         node.put(key, value);
         sleep(1);
@@ -158,7 +161,8 @@ bool is_directory(std::string path_name) {
 	 * FIX WHEN DONE WITH IS_EXISTS (AND RM COMPATIBLE)
 	 * */
 
-	std::cout << "the uuid is: " << name2file << std::endl;
+	
+
         file current_file;
 	
 	for (int i = 0; i < fileStringsVec.size(); i++) {
@@ -207,7 +211,8 @@ void dht_mkdir(std::string path_name) {
 	/* Check if parent directory already contains new directory
 	   If it does, print directory already exists
 	   If it does not, create the new directory */
-        if(dht_exclusive_put(parent_uuid, parseOutgoingDHT(new_directory))) {
+
+	if(dht_exclusive_put(parent_uuid, parseOutgoingDHT(new_directory))) {
 		std::cout << "Linking new directory to parent...\n";
 		sleep(1);
 
@@ -228,75 +233,106 @@ void dht_mkdir(std::string path_name) {
 }
 
 std::vector<std::string> dht_readdir(std::string path_name) {
-	/* string for converting name to uuid */
-        std::string name2file;
-        /* string for storing all file strings in uuid */
-        std::vector<std::string> fileStringsVec;
-        /* vector that contains the conversion of file strings to data type file */
-        std::vector<file> fileVec;
-        /* vector that contains all the file names */
-	std::vector<std::string> fileNamesVec;
+	if (file_exists(path_name)) {
+		/* string for converting name to uuid */
+        	std::string name2file;
+        	/* vector for storing all file strings in uuid */
+        	std::vector<std::string> fileStringsVec;
+        	/* vector that contains the conversion of file strings to data type file */
+        	std::vector<file> fileVec;
+        	/* vector that contains all the file names */
+        	std::vector<std::string> fileNamesVec;
+		/* vector that contains the deleted files */
+		std::vector<file> deletedFilesVec;
+		/* vector that contains the existing files */
+		std::vector<file> existingFilesVec;
 
-        std::cout << "Entering dht_readdir...\n\n";
-        std::cout << "Getting uuid of '" << path_name << "'...\n";
-        /* Get corresponding uuid for filename */
-        node.get(path_name, [&name2file](const std::vector<std::shared_ptr<dht::Value>>& values) {
-                for (const auto& value : values) {
-                        name2file = asciify((*value).data);
-                }
-                return true;
-        });
+        	std::cout << "Entering dht_readdir...\n\n";
 
-        sleep(1);
-        std::cout << "Getting contents of '" << name2file << "'...\n";
-        /* With uuid, get all files in directory */
-        node.get(name2file, [&fileStringsVec](const std::vector<std::shared_ptr<dht::Value>>& values) {
-                for (const auto& value : values) {
-                        std::string uuid2file = asciify((*value).data);
-                        fileStringsVec.push_back(uuid2file);
-                }
-                return true;
-        });
+        	/* Get corresponding uuid for filename */
+        	node.get(path_name, [&name2file](const std::vector<std::shared_ptr<dht::Value>>& values) {
+                	for (const auto& value : values) {
+                        	name2file = asciify((*value).data);
+                	}
+                	return true;
+        	});
 
-        sleep(1);
+        	sleep(1);
 
-	file current_file;
+		/* With uuid, get all files in directory */
+        	node.get(name2file, [&fileStringsVec](const std::vector<std::shared_ptr<dht::Value>>& values) {
+                	for (const auto& value : values) {
+                        	std::string uuid2file = asciify((*value).data);
+                        	fileStringsVec.push_back(uuid2file);
+                	}
+                	return true;
+        	});
 
-        for (int i = 0; i < fileStringsVec.size(); i++) {
-                fileVec.push_back(parseIncomingDHT(fileStringsVec[i]));
-        }
+        	sleep(1);
 
-	for (int i = 0; i < fileVec.size(); i++) {
-		/*
-		std::cout << "fileVec[" << i << "] id: " 	  << fileVec[i].id          << std::endl;
-		std::cout << "fileVec[" << i << "] content: " 	  << fileVec[i].content     << std::endl;
-		std::cout << "fileVec[" << i << "] isExists: " 	  << fileVec[i].isExists    << std::endl;
-		std::cout << "fileVec[" << i << "] isDirectory: " << fileVec[i].isDirectory << std::endl;
-		*/
-		if (fileVec[i].id == stoull(name2file)) {
-			current_file = fileVec[i];
-		}
-		fileNamesVec.push_back(fileVec[i].content);
-		std::cout << std::endl;
-	}
+        	file current_file;
 
-	/* Directory check - check if path_name is a directory
-           If it is, display all files in directory
-           Otherwise, return empty vector and print error */
-	if (current_file.isDirectory) {
-		std::cout << "Contents of fileNamesVec: \n";
-		for (int i = 0; i < fileNamesVec.size(); i++) {
-                	std::cout << fileNamesVec[i] << "    ";
+        	for (int i = 0; i < fileStringsVec.size(); i++) {
+                	fileVec.push_back(parseIncomingDHT(fileStringsVec[i]));
         	}
-		std::cout << "\nLeaving dht_readdir...\n\n";
-        	return fileNamesVec;
+
+		for (int i = 0; i < fileVec.size(); i++) {
+			/*
+                	std::cout << "fileVec[" << i << "] id: "          << fileVec[i].id          << std::endl;
+                	std::cout << "fileVec[" << i << "] content: "     << fileVec[i].content     << std::endl;
+                	std::cout << "fileVec[" << i << "] isExists: "    << fileVec[i].isExists    << std::endl;
+                	std::cout << "fileVec[" << i << "] isDirectory: " << fileVec[i].isDirectory << std::endl;
+			std::cout << std::endl;
+			*/
+			/* Construct vector of deleted files */
+			if (fileVec[i].isExists == false) {
+				deletedFilesVec.push_back(fileVec[i]);
+			}
+                	if (fileVec[i].id == stoull(name2file)) {
+                        	current_file = fileVec[i];
+                	}
+        	}
+		
+		for (int i = 0; i < fileVec.size(); i++) {
+			bool fileExists = true;
+			for (int j = 0; j < deletedFilesVec.size(); j++) {
+				if (fileVec[i] == deletedFilesVec[j]) {
+					std::cout << "THIS FILE HAS BEEN DELETED\n";
+					fileExists = false;
+				}
+			}
+			if (fileExists) {
+				existingFilesVec.push_back(fileVec[i]);
+			}
+		}
+
+		for (int i = 0; i < existingFilesVec.size(); i++) {
+			fileNamesVec.push_back(existingFilesVec[i].content);
+		}
+
+        	/* Directory check - check if path_name is a directory
+           	If it is, display all files in directory
+           	Otherwise, return empty vector and print error */
+        	if (current_file.isDirectory) {
+                	std::cout << "Contents of " << path_name << ":\n";
+                	for (int i = 0; i < fileNamesVec.size(); i++) {
+                        	std::cout << fileNamesVec[i] << "    ";
+                	}
+                	std::cout << "\nLeaving dht_readdir...\n\n";
+                	return fileNamesVec;
+        	}
+        	else {
+                	std::cout << "readdir: cannot read directory '" << file_name(path_name) << "': is not a directory\n";
+                	fileNamesVec.clear();
+                	std::cout << "\nLeaving dht_readdir...\n\n";
+                	return fileNamesVec;
+        	}
 	}
 	else {
-		std::cout << "readdir: cannot read directory '" << file_name(path_name) << "': is not a directory\n";
-		fileNamesVec.clear();
-		std::cout << "\nLeaving dht_readdir...\n\n";
-		return fileNamesVec;
-	}	
+		std::cout << "readdir: cannot readdir '" << path_name << "': No such file or directory\n";
+		std::vector<std::string> emptyVec;
+		return emptyVec;
+	}
 }
 
 void dht_init_root() {
@@ -310,9 +346,101 @@ void dht_init_root() {
 	dht_exclusive_put("1", parseOutgoingDHT(root_directory));
 }
 
-/* remove file at path_name */
+/* remove file at path_name 
+   NOTE: not exclusive put, uses regular put
+   puts same thing with isExist = 0
+*/
+
 void dht_remove(std::string path_name) {
-	
+	if (file_exists(path_name)) {
+		/* set the isExists in the parent of path_name to 0 (with uuid) */
+		
+		/* string for converting name to uuid */
+        	std::string path_uuid;
+        	/* string to hold parent uuid */
+		std::string parent_uuid;	
+		/* vector for storing all file strings in parent uuid */
+        	std::vector<std::string> fileStringsVec;
+		/* vector that contains the conversion of file strings to data type file */
+        	std::vector<file> fileVec;
+       	
+		std::cout << "Removing " << path_name << " ...\n";
+
+		/* Check if path_name is root - (cannot remove root)
+		   	- If is root, throw an error
+			- Otherwise, continue 			*/
+		if (path_name == "/") {
+			std::cout << "rm cannot remove '/': directory is the root directory\n";
+			return;
+		}
+
+		/* Get corresponding uuid for filename */
+        	node.get(path_name, [&path_uuid](const std::vector<std::shared_ptr<dht::Value>>& values) {
+                	for (const auto& value : values) {
+                        	if (asciify((*value).data) != "0") {
+					path_uuid = asciify((*value).data);
+				}
+			//name2file = asciify((*value).data);
+                	}
+                	return true;
+        	});
+
+		sleep(2);
+
+		/* Get corresponding uuid for parent */
+                node.get(parent_path(path_name), [&parent_uuid](const std::vector<std::shared_ptr<dht::Value>>& values) {
+                	for (const auto& value : values) {
+				parent_uuid = asciify((*value).data);
+                	}
+                	return true;
+                });
+
+                sleep(2);
+
+		std::cout << "Getting contents of parent_uuid...\n";
+		/* With uuid, get all files in directory */
+		node.get(parent_uuid, [&fileStringsVec](const std::vector<std::shared_ptr<dht::Value>>& values) {
+                	for (const auto& value : values) {
+                        	std::string uuid2file = asciify((*value).data);
+                        	fileStringsVec.push_back(uuid2file);
+                	}
+                	return true;
+        	});
+
+        	sleep(2);
+
+		for (int i = 0; i < fileStringsVec.size(); i++) {
+                	fileVec.push_back(parseIncomingDHT(fileStringsVec[i]));
+		}
+
+		for (int i = 0; i < fileVec.size(); i++) {
+			if (fileVec[i].id == stoull(path_uuid)) {
+				std::cout << "FOUND THE CORRECT UUID\n";
+				file remove_file(fileVec[i].id, fileVec[i].content, 0, fileVec[i].isDirectory);
+				/* put labeled removed directory to parent */
+                		node.put(parent_uuid, parseOutgoingDHT(remove_file));
+			}
+		}
+		/* set (add) uuid of path_name to 0 */
+		node.put(path_name, "0");
+	}
+	else {
+		std::cout << "rm: cannot remove '" << path_name << "': No such file or directory\n";
+	}
+}
+
+void tempGet(std::string path_name) {
+	std::cout << "Entering tempGet with " << path_name << " ...\n";
+
+	node.get(path_name, [](const std::vector<std::shared_ptr<dht::Value>>& values) {
+                for (const auto& value : values) {
+			std::cout << asciify((*value).data) << std::endl;
+                }
+                return true;
+        });
+
+	sleep(2);
+
 }
 
 int main() {
@@ -322,14 +450,25 @@ int main() {
 	/* for test purposes */
 	dht_init_root();
 	dht_mkdir("/A");
-	dht_readdir("/");
+	dht_mkdir("/B");
+	//dht_readdir("/A");
 	
-	if(file_exists("/")) {
+	std::cout << "/B should appear here \n";
+	dht_readdir("/");
+
+	dht_remove("/C");
+	dht_remove("/B");
+
+	//tempGet("1");
+	//tempGet("/B");
+	std::cout << "/B should no longer appear here\n";
+	dht_readdir("/");
+
+	if(file_exists("/A")) {
 		std::cout << "file exists\n";	
 	}
 	else {
 		std::cout << "file does not exist\n";
 	}
 }
-
 
