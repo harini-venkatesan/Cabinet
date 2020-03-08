@@ -3,7 +3,7 @@ unsigned long long idGenerator() {
         std::random_device rd;
         std::default_random_engine generator(rd());
         /* 1 is reserved for the root */
-        std::uniform_int_distribution<long long unsigned> distribution(2,0xFFFFFFFFFFFFFFFF);
+        std::uniform_int_distribution<long long unsigned> distribution(2,0xFFFFFFFFFFFFFFF);
 
         return distribution(generator);
 }
@@ -28,12 +28,24 @@ std::string file_name(std::string path_name) {
 
 /* Converts vector to ASCII string */
 std::string asciify(std::vector<auto> const &vec) {
-    std::string fullString;
+        std::string fullString;
+        std::string outputString;
 
-    for (int i = 1; i < vec.size(); i++) {
-        fullString += static_cast<char>(vec[i]);
-    }
+        for (int i = 1; i < vec.size(); i++) {
+                fullString += static_cast<char>(vec[i]);
+        }
 
-    return fullString;
+        while(!std::isdigit(fullString[0])) {
+                fullString = fullString.substr(1);
+        }
+
+        return fullString;
 }
 
+/* Checks if path_name is root */
+bool is_root(std::string path_name) {
+        if (path_name == "/") {
+                return true;
+        }
+        return false;
+}
