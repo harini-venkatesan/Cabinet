@@ -29,7 +29,6 @@ std::string file_name(std::string path_name) {
 /* Converts vector to ASCII string */
 std::string asciify(std::vector<auto> const &vec) {
     	std::string fullString;
-	std::string outputString;
 
     	for (int i = 1; i < vec.size(); i++) {
        		fullString += static_cast<char>(vec[i]);
