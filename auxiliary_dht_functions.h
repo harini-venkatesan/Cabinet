@@ -77,14 +77,15 @@ std::string existing_uuid_key(std::string path_name) {
 		//there should at most one
 		bool isExists = true;
 		for (int j = 0; j < deletedUuidsVec.size(); j++) {
-			if (uuidVec[i] == deletedUuidsVec[j]) {
+			if (existingUuidsVec[i] == deletedUuidsVec[j]) {
 				isExists = false;
 			}
 		}
 		if (isExists) {
-			existingKey = uuidVec[i];
+			existingKey = existingUuidsVec[i];
 		}
 	}
+
 	return existingKey;
 }
 
@@ -131,12 +132,12 @@ bool file_exists(std::string path_name) {
 		//there should at most one
 		bool isExists = true;
 		for (int j = 0; j < deletedUuidsVec.size(); j++) {
-			if (uuidVec[i] == deletedUuidsVec[j]) {
+			if (existingUuidsVec[i] == deletedUuidsVec[j]) {
 				isExists = false;
 			}
 		}
 		if (isExists) {
-			existingKey = uuidVec[i];
+			existingKey = existingUuidsVec[i];
 		}
 	}
 
