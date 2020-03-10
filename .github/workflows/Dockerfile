@@ -75,17 +75,3 @@ RUN git clone https://github.com/savoirfairelinux/opendht.git && \
   make install 
 
 
-
-RUN ls 
-RUN git init && \
-    git clone https://github.com/harini-venkatesan/Cabinet.git && \
-    cd Cabinet && \
-    git branch -a && \
-    git checkout test-fuse && \
-    ls && \
-    g++ -std=c++14 test_remove.cpp -o p2p `pkg-config fuse --cflags --libs` -lopendht -lgnutls && \
-    mkdir test 
-
-
-
-EXPOSE 4422
