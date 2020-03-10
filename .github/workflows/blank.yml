@@ -24,12 +24,11 @@ jobs:
 
     # Runs a single command using the runners shell
     - name: Building fuse
-      run: apt-get update && apt-get upgrade,
-          apt-get -y install, 
-          build-essential, 
-          wget, 
-          meson, 
-          pkg-config,
-          libudev-dev,
-          udev. 
+      run: apt-get update && apt-get upgrade
+          apt-get -y install build-essential 
+           apt-get -y install wget
+          apt-get -y install meson 
+          apt-get -y install pkg-config
+          apt-get -y install libudev-dev
+          apt-get -y install udev 
 
