@@ -206,6 +206,8 @@ std::vector<std::string> dht_readdir(std::string path_name) {
 		std::vector<file> fileVec;
 		/* vector that stores all (labeled) deleted files */
 		std::vector<file> deletedFilesVec;
+		/* vector that will filter out to only existingFilesVec */
+		std::vector<file> filterFilesVec;
 		/* vector that contains the existing files */
 		std::vector<file> existingFilesVec;
 		/* vector that contains names of all files */
@@ -233,20 +235,20 @@ std::vector<std::string> dht_readdir(std::string path_name) {
 				deletedFilesVec.push_back(fileVec[i]);
 			}
 			else {
-				existingFilesVec.push_back(fileVec[i]);
+				filterFilesVec.push_back(fileVec[i]);
 			}
 		}
 		
 		/* remove files that have been (labeled as) deleted */
-		for (int i = 0; i < existingFilesVec.size(); i++) {
+		for (int i = 0; i < filterFilesVec.size(); i++) {
 			bool fileExists = true;
 			for (int j = 0; j < deletedFilesVec.size(); j++)  {
-				if (existingFilesVec[i] == deletedFilesVec[j]) {
+				if (filterFilesVec[i] == deletedFilesVec[j]) {
 					fileExists = false;
 				}
 			}
-			if (!fileExists) {
-				existingFilesVec.erase(existingFilesVec.begin() + i);
+			if (fileExists) {
+				existingFilesVec.push_back(filterFilesVec[i]);
 			}
 		}
 
