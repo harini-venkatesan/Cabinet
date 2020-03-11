@@ -1,10 +1,17 @@
-FROM ubuntu
+FROM ubuntu:18.04
+
 ARG LIBFUSE_VERSION=fuse-3.9.0
 
-# Installs LibFUSE so we dont end up with errors
-# in coreos when trying to mount rclone.
-# https://github.com/libfuse/libfuse
-# https://github.com/libfuse/libfuse/releases
+
+# Copy the current folder which contains C++ source code to the Docker image under /usr/src
+COPY . /usr/src/dockertest1
+
+# Specify the working directory
+WORKDIR /usr/src/dockertest1
+
+RUN pwd && \ 
+    ls 
+
 RUN apt-get update && apt-get upgrade -y && \
     apt-get -y install \
         build-essential \
@@ -16,15 +23,15 @@ RUN apt-get update && apt-get upgrade -y && \
 
 RUN wget -O "fuse.tar.xz" "https://github.com/libfuse/libfuse/releases/download/${LIBFUSE_VERSION}/${LIBFUSE_VERSION}.tar.xz" && \
     tar -xf fuse.tar.xz && \
-    rm -f fuse.tar.xz && mv fuse* fuse
+    ls /usr/src/dockertest1 && \
+    rm -f fuse.tar.xz 
 
 # Installing util/fusermount3 to /usr/local/bin/fusermount3
 # Installing util/mount.fuse3 to /usr/local/sbin/mount.fuse3
-RUN cd fuse && \
+RUN cd fuse-3.9.0 && \
     mkdir build && cd build && \
     meson .. && ninja install
 
-FROM ubuntu:18.04
 
 # start from above 
 
@@ -35,6 +42,7 @@ RUN apt-get install -y \
   libreadline-dev \
   libfuse-dev \
   libjsoncpp-dev \
+  libudev-dev \
   nettle-dev \
   libgnutls28-dev \
   librestbed-dev \
@@ -71,20 +79,15 @@ RUN git clone https://github.com/savoirfairelinux/opendht.git && \
   make -j4 && \
   make install 
 
-RUN git init && \
-    git clone https://github.com/harini-venkatesan/Cabinet.git && \
-    cd Cabinet && \
-    git branch -a && \
-    git checkout test-fuse && \
-    ls && \
-    g++ -std=c++14 test_remove.cpp -o p2p `pkg-config fuse --cflags --libs` -lopendht -lgnutls && \
-    mkdir test 
-
 RUN mkdir files
 
-COPY . /files
-WORKDIR /files
+CMD tail -f /dev/null
 
-CMD ["ls"]
+# Use GCC to compile the Test.cpp source file
+#RUN g++ -std=c++14 p2p.cpp -o p2p `pkg-config fuse --cflags --libs` -lopendht -lgnutls
+
+# Run the program output from the previous step
+#CMD ["/usr/src/dockertest1/./p2p", "/usr/src/dockertest1/test"]
+
 
 
