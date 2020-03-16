@@ -55,8 +55,8 @@ Otherwise nothing exists at the given path, and we return -ENOENT.
   else if (file_exists(s)) {
     stbuf->st_mode = S_IFREG | 0777;
     stbuf->st_nlink = 1;
-    //std::string str = dht_read(s);  
-    //stbuf->st_size = 3;
+    std::string str = dht_read(s);  
+    stbuf->st_size = sizeof(str);
 	return 0;
     }
 
@@ -166,7 +166,10 @@ static int p2pread(const char *path, char *buf, size_t size, off_t offset,struct
                 
 		//std::string str = "";
                 str = dht_read(s);
+                std::cout << "string after dht_read "<< str;
                 strcpy(buf, str.c_str());
+                std::cout << "buf: " << buf;
+                std::cout << sizeof(buf);
         }	
         
        return sizeof(str);       
@@ -243,7 +246,7 @@ int main( int argc, char *argv[] ) {
 	dispatcher->set_create	(&p2pcreate);
 	dispatcher->set_rename	(&p2prename);
 	dispatcher->set_truncate(&p2ptruncate);
-	//dispatcher->set_open	(&p2popen);
+//	dispatcher->set_open	(&p2popen);
         dispatcher->set_access	(&p2paccess);
 
         //call fuse_main() with the operations set above. 
