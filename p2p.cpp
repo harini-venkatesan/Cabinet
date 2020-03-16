@@ -139,7 +139,7 @@ else call dht_rm function */
 
 
 static int p2pcreate(const char * path, mode_t mode, struct fuse_file_info *fi) {
-
+/* calls dht_create if file exists, if not returns error*/
         std::string s(path);
 		mode = S_IFREG | 0777;
         dht_create(s);
@@ -173,7 +173,7 @@ static int p2pread(const char *path, char *buf, size_t size, off_t offset,struct
         }	
         
        return sizeof(str);       
-		//return 0;
+		
 }
 
 
@@ -189,13 +189,7 @@ If file is not empty, --        */
                 return -ENONET;
         }
 
-        //str = (const char*) dht_read(s);
-		//std::string input_string = "";
-		//char * cstr = new char [input_string.length() + 1];
-		//const char *C = input_string.c_str();
-		//strcpy(cstr, input_string.c_str());
-		//const char *b = &input_string;
-        //strcpy(buf, input_string.data());
+        
 	std::string input(buf);
         dht_write(s, input);
        
@@ -203,11 +197,14 @@ If file is not empty, --        */
 }
 
 static int p2ptruncate(const char *path, off_t size) {
+/* Unless you're writing a read-only filesystem, you need to implement the truncate system call to make writes work correctly.
+only used for write()*/
 	return 0;
 }
 
 static int p2prename(const char* from, const char* to) {
-        std::string s_from(from);
+/* perform dht_rename if the file does not exist */ 
+	std::string s_from(from);
 		std::string s_to(to);
         if(!file_exists(s_from)){
                 return -ENONET;
@@ -231,7 +228,7 @@ int main( int argc, char *argv[] ) {
 	FuseDispatcher *dispatcher;
 
         node.run(4395, dht::crypto::generateIdentity(), true);
-        //node.bootstrap("bootstrap.jami.net", "4222");
+        node.bootstrap("bootstrap.jami.net", "4222");
 
 	dispatcher = new FuseDispatcher();
 	
@@ -246,7 +243,6 @@ int main( int argc, char *argv[] ) {
 	dispatcher->set_create	(&p2pcreate);
 	dispatcher->set_rename	(&p2prename);
 	dispatcher->set_truncate(&p2ptruncate);
-//	dispatcher->set_open	(&p2popen);
         dispatcher->set_access	(&p2paccess);
 
         //call fuse_main() with the operations set above. 
