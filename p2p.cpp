@@ -18,6 +18,7 @@
 #include "functions.h"  //contains some dht related functions
 #include "file.h"       //contains definiton of the data structure in dht
 #include "auxiliary_dht_functions.h"
+#include "dht_functions.h"
 
 /* Global dhtrunner */
 //dht::DhtRunner node;
