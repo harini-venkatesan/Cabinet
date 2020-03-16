@@ -21,3 +21,20 @@ Our objective is to create a structured peer-to-peer filesystem using OpenDHT an
 
 * Scalability: the more users the better the system performs.
 * Decentralization: Users are free to join and leave the network with little repercussions. Additionally, there is no single point of failure and no overarching data authority.
+
+## References
+
+* [libfuse](https://github.com/libfuse/libfuse)
+> FUSE (Filesystem in Userspace) is an interface for userspace programs to export a filesystem to the Linux kernel. The FUSE project consists of two components: the fuse kernel module (maintained in the regular kernel repositories) and the libfuse userspace library (maintained in this repository). libfuse provides the reference implementation for communicating with the FUSE kernel module.
+
+* [FUSE Example](https://github.com/Aveek-Saha/FUSE-Filesystem)
+
+A FUSE filesystem that uses a binary file, by Aveek Saha.
+
+* [FUSE Dispatcher](http://www.circlesoft.com/fusecpp.h) 
+
+A FUSE C to C++14 dispatcher, by Gerard J. Cerchio
+
+* [OpenDHT](https://github.com/savoirfairelinux/opendht)
+> A lightweight C++14 Distributed Hash Table implementation. OpenDHT provides an easy to use distributed in-memory data store. Every node in the network can read and write values to the store. Values are distributed over the network, with redundancy.
+
