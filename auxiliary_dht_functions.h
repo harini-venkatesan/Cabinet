@@ -187,7 +187,6 @@ bool is_directory(std::string path_name) {
 		return false;
 	}
 	else {
-		std::cout << "ERROR: is_directory: " << path_name << " : File does not exist\n";
 		return false;
 	}
 }

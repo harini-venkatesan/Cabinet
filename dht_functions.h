@@ -9,13 +9,18 @@
 #include <random>
 #include <opendht.h>
 #include <sstream>
+#include <fstream>
 
 #include "functions.h"
 #include "file.h"
 #include "auxiliary_dht_functions.h"
 
+/* Used for outputting to log */
+std::ofstream output_log;
+
 void dht_init_root() {
-	std::cout << "initializing root...\n";
+	std::cout << "initializing root...\n\n";
+	output_log << "initializing root...\n\n";
 
 	file root_directory(1, ".", true, true);
 	dht_exclusive_put("/", "1", 1, 0);
@@ -24,6 +29,8 @@ void dht_init_root() {
 
 void dht_create(std::string path_name) {
 	std::cout << "=== dht_create(" << path_name << ") ===\n";
+	output_log << "=== dht_create(" << path_name << ") ===\n";
+
 	if (!file_exists(path_name)) {
 		unsigned long long file_id = idGenerator();
 		std::string parent_uuid;
@@ -35,6 +42,8 @@ void dht_create(std::string path_name) {
 		if (parent_uuid == "NONE") {
 			std::cout << "ERROR3: create: cannot create file '" << path_name << "': No such file or directory\n";
 			std::cout << "=== dht_create complete ===\n\n";
+			output_log << "ERROR3: create: cannot create file '" << path_name << "': No such file or directory\n";
+			output_log << "=== dht_create complete ===\n\n";
 			return;
 		}
 
@@ -43,9 +52,11 @@ void dht_create(std::string path_name) {
 
 		if (dht_exclusive_put(parent_uuid, parseOutgoingDHT(new_file), 0, 1)) {
 			std::cout << "Linking  '" << path_name << "' to parent...\n";
-
+			output_log << "Linking '" << path_name << "' to parent...\n";
 			/* Create the file on dht */
-			std::cout << "Creating '" << path_name << "' on dht with id: " << file_id << std::endl;
+			std::cout << "Creating '" << path_name << "' on dht...\n";
+			output_log << "Creating '" << path_name << "' on dht with id: " << file_id << std::endl;
+
 			/* put <path, id> */
 			dht_exclusive_put(path_name, std::to_string(file_id), 0, 0);
 			/* put <id, <id, "", 1, 0>> */
@@ -54,16 +65,20 @@ void dht_create(std::string path_name) {
 		}
 		else {
 			std::cout << "ERROR2: create: cannot create file '" << path_name << "': File exists\n";
+			output_log << "ERROR2: create: cannot create file '" << path_name << "': File exists\n";
 		}
 	}
 	else {
-		std::cout << "ERROR1: create: cannot create file '" << file_name(path_name) << "': File exists\n";
+		std::cout << "ERROR1: create: cannot create file '" << path_name << "': File exists\n";
+		output_log << "ERROR1: create: cannot create file '" << path_name << "'File exists\n";
 	}
 	std::cout << "=== dht_create complete ===\n\n";
+	output_log << "=== dht_create complete ===\n\n";
 }
 
 void dht_mkdir(std::string path_name) {
 	std::cout << "=== dht_mkdir(" << path_name << ") ===\n";
+	output_log << "=== dht_mkdir(" << path_name << ") ===\n";
 	if (!file_exists(path_name)) {
 		unsigned long long file_id = idGenerator();
 		std::string parent_uuid;
@@ -75,6 +90,8 @@ void dht_mkdir(std::string path_name) {
 		if (parent_uuid == "NONE") {
 			std::cout << "ERROR2: mkdir: cannot create directory '" << path_name << "': No such file or directory\n";
 			std::cout << "=== dht_mkdir complete ===\n\n";
+			output_log << "ERROR2: mkdir: cannot create directory'" << path_name << "': No such file or directory\n";
+			output_log << "=== dht_mkdir complete ===\n\n";
 			return;
 		}
 
@@ -82,10 +99,10 @@ void dht_mkdir(std::string path_name) {
 
 		if (dht_exclusive_put(parent_uuid, parseOutgoingDHT(new_directory), 1, 1)) {
 			std::cout << "Linking '" << path_name << "' to parent...\n";
-			sleep(1);
-
+			output_log << "Linking '" << path_name << "' to parent...\n";
 			/* Create the directory on dht */
-			std::cout << "Creating '" << path_name << "' on dht with id: " << file_id << std::endl;
+			std::cout << "Creating '" << path_name << "' on dht...\n";
+			output_log << "Creating '" << path_name << "' on dht with id: " << file_id << std::endl;
 			/* On directory itself, content is '.' */
 			//new_directory.content = ".";
 			/* put <path, id> */
@@ -96,13 +113,16 @@ void dht_mkdir(std::string path_name) {
 	}
 	else {
 		std::cout << "ERROR1: mkdir: cannot create directory '" << path_name << "': Directory exists\n";
+		output_log << "ERROR1: mkdir: cannot create directory '" << path_name << "': Directory exists\n";
 	}
 	std::cout << "=== dht_mkdir complete ===\n\n";
+	output_log << "=== dht_mkdir complete ===\n\n";
 }
 
 /* remove file at path_name - put the same thing with isExist = 0 */
 void dht_remove(std::string path_name) {
 	std::cout << "=== dht_remove(" << path_name << ") ===\n";
+	output_log << "=== dht_remove(" << path_name << ") ===\n";
 	if (file_exists(path_name)) {
 		/* set isExists = 0 in parent directory */
 		std::string path_uuid;
@@ -115,6 +135,7 @@ void dht_remove(std::string path_name) {
 
 		if (is_root(path_name)) {
 			std::cout << "ERROR2: rm cannot remove '/': directory is the root directory\n";
+			output_log << "ERROR2: rm cannot remove '/': directory is the root directory\n";
 			return;
 		}
 		
@@ -143,28 +164,33 @@ void dht_remove(std::string path_name) {
 			}
 		}
 		/* set (add) uuid of path_name to deleted, i.e. uuid + 'D' */
-		std::cout << "REMOVING ID: " << path_uuid << std::endl;
+		output_log << "REMOVING ID: " << path_uuid << std::endl;
 		node.put(path_name, path_uuid + 'D');
 		sleep(1);
 	}
 	else {
 		std::cout << "ERROR1: rm: cannot remove '" << path_name << "': is not a file or directory\n";
+		output_log << "ERROR1: rm: cannot remove '" << path_name << "': is not a file or directory\n";
 	}
 	std::cout << "=== dht_remove complete ===\n\n";
+	output_log << "=== dht_remove complete ===\n\n";
 }
 
 /* renames path_from to path_to */
 void dht_rename(std::string path_from, std::string path_to) {
 	std::cout << "=== dht_rename(" << path_from << ") ===\n";
+	output_log << "=== dht_rename(" << path_from << ") ===\n";
 	if (file_exists(path_from)) {
 		if (!file_exists(path_to)) {
 			if(is_directory(path_from)) {
 				/* TODO renaming a directory */
-
+				std::cout << "ERROR3: rename: renaming directory feature not yet supported\n";
+				output_log << "ERROR3: rename: renaming directory feature not yet supported\n";
 			}
 			else {
 				/* renaming a file */
-				std::cout << "renaming FILE '" << path_from << "' to '" << path_to << "'...\n";
+				std::cout << "renaming FILE '" << path_from << "' to '" << path_to << "'...\n\n";
+				output_log << "renaming FILE '" << path_from << "' to '" << path_to << "'...\n\n";
 				std::string path_from_uuid = existing_uuid_key(path_from);
 				std::string parent_uuid = existing_uuid_key(parent_path(path_from));
 				
@@ -184,18 +210,22 @@ void dht_rename(std::string path_from, std::string path_to) {
 		else {
 			/* dst file already exists */
 			std::cout << "ERROR2: rename: cannot rename '" << path_to << "': already exists\n";
+			output_log << "ERROR2: rename: cannot rename '" << path_to << "': already exists\n";
 		}
 	}
 	else {
 		/* src file does not exist */
 		std::cout << "ERROR1: rename: cannot rename '" << path_from << "': is not a file or directory\n";
+		output_log << "ERROR1: rename: cannot rename '" << path_from << "': is not a file or directory\n";
 	}
 	std::cout << "=== dht_rename complete ===\n\n";
+	output_log << "=== dht_rename complete ===\n\n";
 }	
 
 /* return the contents of a file (path_name) */
 std::string dht_read(std::string path_name) {
 	std::cout << "=== dht_read(" << path_name << ") ===\n";
+	output_log << "=== dht_read(" << path_name << ") ===\n";
 	if (file_exists(path_name)) {
 		if(!is_directory(path_name)) {
 			/* string to hold uuid */
@@ -249,19 +279,24 @@ std::string dht_read(std::string path_name) {
 			}
 			
 			std::cout << "=== dht_read complete ===\n\n";
+			output_log << "=== dht_read complete ===\n\n";
 			return current_file.content;
 		}
 		else {
 			std::cout << "ERROR2: read: cannot read file '" << path_name << "'file is a directory\n";
+			output_log << "ERROR2: read: cannot read file '" << path_name << "'file is a directory\n";
 			std::string emptyString;
 			std::cout << "=== dht_read complete ===\n\n";
+			output_log << "=== dht_read complete ===\n\n";
 			return emptyString;
 	
 		}}
 	else {
 		std::cout << "ERROR1: read: cannot read file '" << path_name << "'file does not exist\n";
+		output_log << "ERROR1: read: cannot read file '" << path_name << "'file does not exist\n";
 		std::string emptyString;
 		std::cout << "=== dht_read complete ===\n\n";
+		output_log << "=== dht_read complete ===\n\n";
 		return emptyString;
 	}
 }
@@ -269,6 +304,7 @@ std::string dht_read(std::string path_name) {
 /* append content to a file */
 void dht_write(std::string path_name, std::string content) {
 	std::cout << "=== dht_write(" << path_name << ") ===\n";
+	output_log << "=== dht_write(" << path_name << ") ===\n";
 	if (file_exists(path_name)) {
 		if (!is_directory(path_name)) {	
 			/* string that holds the uuid of the file */
@@ -279,7 +315,8 @@ void dht_write(std::string path_name, std::string content) {
 			file delete_file;
 
 			std::cout << "Writing '"<< content << "' to " << file_name(path_name) << "...\n";
-			
+			output_log << "Writing '" << content << "' to " << file_name(path_name) << "...\n";
+
 			//TODO deleted values
 			path_uuid = existing_uuid_key(path_name);
 			node.get(path_uuid, [&fileString](const std::vector<std::shared_ptr<dht::Value>>& values) {
@@ -302,20 +339,23 @@ void dht_write(std::string path_name, std::string content) {
 			current_file.content = current_file.content + content;
 			/* put the new file */
 			node.put(path_uuid, parseOutgoingDHT(current_file));
-
-			std::cout << "=== dht_write complete ===\n\n";
 		}
 		else {
 			std::cout << "ERROR2: write: cannot write to '" << path_name << "file is a directory\n";
+			output_log << "ERROR2: write: cannot write to '" << path_name << "file is a directory\n";
 		}
 	}
 	else {
 		std::cout << "ERROR1: write: cannot write to '" << path_name << "file does not exist\n";
+		output_log << "ERROR1: write: cannot write to '" << path_name << "file does not exist\n";
 	}
+	std::cout << "=== dht_write complete ===\n\n";
+	output_log << "=== dht_write complete ===\n\n";
 }
 
 std::vector<std::string> dht_readdir(std::string path_name) {
 	std::cout << "=== dht_readdir(" << path_name << ")===\n";
+	output_log << "=== dht_readdir(" << path_name << ")===\n";
 	if (is_directory(path_name)) {
 		/* string that holds the uuid of the file */
 		std::string fileUuid;
@@ -377,19 +417,21 @@ std::vector<std::string> dht_readdir(std::string path_name) {
 		}
 
 		/* print file names */
-		std::cout << "CONTENTS OF " << path_name << ":\n";
+		output_log << "CONTENTS OF " << path_name << ":\n";
 		for (int i = 0; i < fileNamesVec.size(); i++) {
-			std::cout << fileNamesVec[i] << "     ";
+			output_log << fileNamesVec[i] << "     ";
 		}
-		std::cout << std::endl;
+		output_log << std::endl;
 		std::cout << "=== dht_readdir complete ===\n\n";
+		output_log << "=== dht_readdir complete ===\n\n";
 		return fileNamesVec;
 	}
 	else {
 		std::cout << "ERROR1: readdir: cannot readdir '" << path_name << "': is not a directory\n";
-		
+		output_log << "ERROR1: readdir: cannot readdir '" << path_name << "': is not a directory\n";
 		std::vector<std::string> emptyVec;
 		std::cout << "=== dht_readdir complete ===\n\n";
+		output_log << "=== dht_readdir complete ===\n\n";
 		return emptyVec;
 	}
 }
