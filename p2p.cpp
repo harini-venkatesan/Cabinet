@@ -15,9 +15,9 @@
 #include <sstream>
 
 #include "fusecpp.h"    //contains header for c to c+ conversion of fuse
-#include "functions.h"  //contains some dht related functions
-#include "file.h"       //contains definiton of the data structure in dht
-#include "auxiliary_dht_functions.h"
+//#include "functions.h"  //contains some dht related functions
+//#include "file.h"       //contains definiton of the data structure in dht
+//#include "auxiliary_dht_functions.h"
 #include "dht_functions.h"
 
 /* Global dhtrunner */
@@ -155,6 +155,7 @@ static int p2pcreate(const char * path, mode_t mode, struct fuse_file_info *fi) 
 static int p2pread(const char *path, char *buf, size_t size, off_t offset,struct fuse_file_info *fi) {
 /* convert to string. If the file does not exist, call error. Else  */
         std::string s(path);
+        std::string str = "";
 
        if(!file_exists(s)){
              return -ENOENT;
@@ -163,7 +164,7 @@ static int p2pread(const char *path, char *buf, size_t size, off_t offset,struct
 
         else{
                 
-		std::string str = "";
+		//std::string str = "";
                 str = dht_read(s);
                 strcpy(buf, str.c_str());
         }	
