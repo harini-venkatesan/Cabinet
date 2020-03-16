@@ -49,7 +49,7 @@ void dht_create(std::string path_name) {
 			/* put <path, id> */
 			dht_exclusive_put(path_name, std::to_string(file_id), 0, 0);
 			/* put <id, <id, "", 1, 0>> */
-			new_file.content = "hello";
+			new_file.content = "";
 			dht_exclusive_put(std::to_string(file_id), parseOutgoingDHT(new_file), 0, 1);
 		}
 		else {
